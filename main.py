@@ -40,6 +40,8 @@ class Window(Frame):
         self.pack(fill=BOTH, expand=1)
         FryButton  = Button(self, text="Fry one step", command=self.frystep, width=10, height=1)
         QuitButton = Button(self, text="Quit", command=self.quit, width=10, height=1)
+        self.HSV = IntVar()
+        HSVButton = Checkbutton(self, text="HSV", variable=self.HSV, )
 
         self.progress = ttk.Progressbar(self, orient="horizontal",
                                         length=310, mode="determinate")
@@ -51,6 +53,7 @@ class Window(Frame):
 
         FryButton.place(x=340, y=560)
         QuitButton.place(x=440, y=560)
+        HSVButton.place(x=10, y=580)
         self.progress.place(x=10, y=562)
 
         self.progress["value"] = 0
@@ -58,11 +61,11 @@ class Window(Frame):
 
     def frystep(self):
         print("Fry that picture")
-        self.imagesrc = noise(self.imagesrc, 0)
+        self.imagesrc = noise(self.imagesrc, self.HSV.get())
         new_image = ImageTk.PhotoImage(self.imagesrc)
         self.label.configure(image=new_image)
         self.label.image = new_image
-        print(type(new_image))
+        #print(type(new_image))
         self.progress["value"] += 5
 
     def quit(self):
@@ -74,7 +77,6 @@ if __name__ == '__main__':
 
     root = Tk()
     root.resizable(width=False, height=False)
-    root.geometry("550x600")
+    root.geometry("550x650")
     app = Window(root)
-
     root.mainloop()
