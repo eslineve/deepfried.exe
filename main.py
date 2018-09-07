@@ -61,7 +61,10 @@ class Window(Frame):
 
     def frystep(self):
         print("Fry that picture")
-        self.imagesrc = noise(self.imagesrc, self.HSV.get())
+        if (self.progress["value"] < 5):
+            self.imagesrc = noise(self.imagesrc, self.HSV.get())
+        elif (self.progress["value"] < 10):
+            print("ripple")
         new_image = ImageTk.PhotoImage(self.imagesrc)
         self.label.configure(image=new_image)
         self.label.image = new_image
