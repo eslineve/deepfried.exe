@@ -9,7 +9,7 @@ import numpy as np
 import cv2
 
 def noise(image):
-      imagecv = cv2.cvtColor(cv2.imread(image), cv2.COLOR_BGR2RGB)
+      imagecv = cv2.cvtColor(np.array(image), 1)
 
       row,col,ch = imagecv.shape
       mean = 1
@@ -18,10 +18,10 @@ def noise(image):
       gauss = np.random.normal(mean,sigma,(row,col,ch))
       gauss = gauss.reshape(row,col,ch)
       noisy = imagecv + gauss
-      print(type(noisy))
+
       #im = Image.fromarray(noisy)
-      imgtk = ImageTk.PhotoImage(image = Image.fromarray(noisy.astype('uint8')))
-      return imgtk
+      image = Image.fromarray(noisy.astype('uint8'))
+      return image
 
 class Window(Frame):
     def __init__(self, master=None):
@@ -39,8 +39,8 @@ class Window(Frame):
 
         self.progress = ttk.Progressbar(self, orient="horizontal",
                                         length=310, mode="determinate")
-        self.imagesrc = "Fry.jpg"
-        self.image = ImageTk.PhotoImage(Image.open(self.imagesrc))
+        self.imagesrc = Image.open("Fry.jpg")
+        self.image = ImageTk.PhotoImage(self.imagesrc)
         self.label = Label(image=self.image, width=530, height=530)
         self.label.image = self.image # keep a reference!
         self.label.place(x=10, y=10)
@@ -54,9 +54,11 @@ class Window(Frame):
 
     def frystep(self):
         print("Fry that picture")
-        new_image = noise(self.imagesrc)
+        self.imagesrc = noise(self.imagesrc)
+        new_image = ImageTk.PhotoImage(self.imagesrc)
         self.label.configure(image=new_image)
         self.label.image = new_image
+        print(type(new_image))
         self.progress["value"] += 5
 
     def quit(self):
