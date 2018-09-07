@@ -47,6 +47,7 @@ if __name__ == '__main__':
 	print("Hello World my old friend")
 
 	root = Tk()
+	root.resizable(width=False, height=False)
 	root.geometry("550x600")
 	app = Window(root)
 
