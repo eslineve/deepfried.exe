@@ -24,12 +24,18 @@ def noise(image, hsv, mean, var):
       #im = Image.fromarray(noisy)
       image = Image.fromarray(noisy.astype('uint8'))
       return image
-def ripple(image):
+def ripple(image, xA, xw, yA, yw):
     imagecv = np.array(image)
-    Ax = imagecv.shape[1] / 50
-    wx = 3 / imagecv.shape[0]
-    Ay = imagecv.shape[0] / 50
-    wy = 3 / imagecv.shape[1]
+    if(xA == 0):
+        Ax = 0
+    else:
+        Ax = imagecv.shape[1] / xA
+    wx = xw / imagecv.shape[0]
+    if(yA == 0):
+        Ay = 0
+    else:
+        Ay = imagecv.shape[0] / yA
+    wy = yw / imagecv.shape[1]
 
     shiftx = lambda x: Ax * np.cos(2.0 * np.pi * x * wx)
     shifty = lambda x: Ay * np.cos(2.0 * np.pi * x * wy)
@@ -69,10 +75,34 @@ class Window(Frame):
 
         T1 = Label(self)
         T2 = Label(self)
+        T3 = Label(self)
+        T4 = Label(self)
         T1.config(text = "mean")
         T2.config(text="variance")
-        T1.place(x=10, y=630)
-        T2.place(x=10, y=670)
+        T3.config(text="ripple x")
+        T4.config(text="ripple y")
+        T1.place(x=10, y=620)
+        T2.place(x=10, y=660)
+        T3.place(x=250, y=620)
+        T4.place(x=250, y=660)
+
+        self.xA = StringVar()
+        self.xw = StringVar()
+        self.yA = StringVar()
+        self.yw = StringVar()
+        self.ExA = Entry(self, width=5, textvariable=self.xA)
+        self.Exw = Entry(self, width=5, textvariable=self.xw)
+        self.EyA = Entry(self, width=5, textvariable=self.yA)
+        self.Eyw = Entry(self, width=5, textvariable=self.yw)
+        self.ExA.place(x=300, y=620)
+        self.Exw.place(x=350, y=620)
+        self.EyA.place(x=300, y=660)
+        self.Eyw.place(x=350, y=660)
+        self.xA.set(50)
+        self.xw.set(3)
+        self.yA.set(0)
+        self.yw.set(3)
+
         FryButton.place(x=340, y=560)
         QuitButton.place(x=440, y=560)
         HSVButton.place(x=40, y=580)
@@ -91,7 +121,7 @@ class Window(Frame):
             self.imagesrc = noise(self.imagesrc, self.HSV.get(), self.scalemean.get(), self.scalevar.get())
         elif (self.progress["value"] < 10):
             print("ripple")
-            self.imagesrc = ripple(self.imagesrc)
+            self.imagesrc = ripple(self.imagesrc, int(self.xA.get()), int(self.xw.get()), int(self.yA.get()), int(self.yw.get()))
         new_image = ImageTk.PhotoImage(self.imagesrc)
         self.label.configure(image=new_image)
         self.label.image = new_image
