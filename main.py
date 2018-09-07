@@ -44,7 +44,7 @@ class Window(Frame):
 
 
 if __name__ == '__main__':
-	print("Hello World")
+	print("Hello World my old friend")
 
 	root = Tk()
 	root.geometry("550x600")
