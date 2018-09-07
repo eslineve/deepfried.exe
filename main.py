@@ -5,6 +5,18 @@ from tkinter import ttk
 
 from PIL import ImageTk, Image
 
+import numpy as np
+
+def noise(image):
+      row,col,ch= image.shape
+      mean = 0
+      var = 0.1
+      sigma = var**0.5
+      gauss = np.random.normal(mean,sigma,(row,col,ch))
+      gauss = gauss.reshape(row,col,ch)
+      noisy = image + gauss
+      return noisy
+
 class Window(Frame):
 	def __init__(self, master=None):
 		Frame.__init__(self, master)
