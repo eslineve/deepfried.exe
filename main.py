@@ -8,16 +8,20 @@ from PIL import ImageTk, Image
 import numpy as np
 import cv2
 
-def noise(image):
-      imagecv = cv2.cvtColor(np.array(image), 1)
+def noise(image, hsv):
+      imagecv = np.array(image)
+      if(hsv == 1):
+          imagecv = cv2.cvtColor(imagecv, cv2.COLOR_RGB2HSV)
 
       row,col,ch = imagecv.shape
       mean = 1
-      var = 1000
+      var = 500
       sigma = var**0.5
       gauss = np.random.normal(mean,sigma,(row,col,ch))
       gauss = gauss.reshape(row,col,ch)
       noisy = imagecv + gauss
+      if (hsv == 1):
+          noisy = cv2.cvtColor(noisy.astype('uint8'), cv2.COLOR_HSV2RGB)
 
       #im = Image.fromarray(noisy)
       image = Image.fromarray(noisy.astype('uint8'))
@@ -54,7 +58,7 @@ class Window(Frame):
 
     def frystep(self):
         print("Fry that picture")
-        self.imagesrc = noise(self.imagesrc)
+        self.imagesrc = noise(self.imagesrc, 0)
         new_image = ImageTk.PhotoImage(self.imagesrc)
         self.label.configure(image=new_image)
         self.label.image = new_image
