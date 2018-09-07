@@ -10,17 +10,17 @@ import cv2
 
 def noise(image, hsv):
       imagecv = np.array(image)
-      if(hsv == 1):
+      if(hsv):
           imagecv = cv2.cvtColor(imagecv, cv2.COLOR_RGB2HSV)
 
       row,col,ch = imagecv.shape
       mean = 1
-      var = 500
+      var = 10
       sigma = var**0.5
       gauss = np.random.normal(mean,sigma,(row,col,ch))
       gauss = gauss.reshape(row,col,ch)
       noisy = imagecv + gauss
-      if (hsv == 1):
+      if (hsv):
           noisy = cv2.cvtColor(noisy.astype('uint8'), cv2.COLOR_HSV2RGB)
 
       #im = Image.fromarray(noisy)
