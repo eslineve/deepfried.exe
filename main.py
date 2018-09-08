@@ -57,6 +57,9 @@ def facereg (imagesrc):
 
     # Read the image
     image = np.array(imagesrc)
+    cryimage = cv2.imread("cri.png", -1)
+    b, g, r, a = cv2.split(cryimage)
+    cryimage = cv2.merge((r, g, b, a))
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Detect faces in the image
@@ -72,7 +75,18 @@ def facereg (imagesrc):
 
     # Draw a rectangle around the faces
     for (x, y, w, h) in faces:
-        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+
+        cryimage = cv2.resize(cryimage, (w, h))
+
+        y1, y2 = y, y + cryimage.shape[0]
+        x1, x2 = x, x + cryimage.shape[1]
+
+        alpha_s = cryimage[:, :, 3] / 255.0
+        alpha_l = 1.0 - alpha_s
+
+        for c in range(0, 3):
+            image[y1:y2, x1:x2, c] = (alpha_s * cryimage[:, :, c] +
+                                      alpha_l * image[y1:y2, x1:x2, c])
     imagesrc = Image.fromarray(image.astype('uint8'))
     return imagesrc
 
