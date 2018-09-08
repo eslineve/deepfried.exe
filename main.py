@@ -9,6 +9,20 @@ from PIL import ImageTk, Image
 import numpy as np
 import cv2
 
+def placeimage(image1, image2, x, y, w, h):
+    image2 = cv2.resize(image2, (w, h))
+
+    y1, y2 = y, y + image2.shape[0]
+    x1, x2 = x, x + image2.shape[1]
+
+    alpha_s = image2[:, :, 3] / 255.0
+    alpha_l = 1.0 - alpha_s
+
+    for c in range(0, 3):
+        image1[y1:y2, x1:x2, c] = (alpha_s * image2[:, :, c] +
+                                  alpha_l * image1[y1:y2, x1:x2, c])
+    return image1
+
 
 def noise(image, hsv, mean, var):
     imagecv = np.array(image)
@@ -71,22 +85,11 @@ def facereg (imagesrc):
         flags=cv2.CASCADE_SCALE_IMAGE
     )
 
-    print("Found {0} faces!".format(len(faces)))
+    print("Found {0} face(s)".format(len(faces)))
 
     # Draw a rectangle around the faces
     for (x, y, w, h) in faces:
-
-        cryimage = cv2.resize(cryimage, (w, h))
-
-        y1, y2 = y, y + cryimage.shape[0]
-        x1, x2 = x, x + cryimage.shape[1]
-
-        alpha_s = cryimage[:, :, 3] / 255.0
-        alpha_l = 1.0 - alpha_s
-
-        for c in range(0, 3):
-            image[y1:y2, x1:x2, c] = (alpha_s * cryimage[:, :, c] +
-                                      alpha_l * image[y1:y2, x1:x2, c])
+        image = placeimage(image, cryimage, x, y, w, h)
     imagesrc = Image.fromarray(image.astype('uint8'))
     return imagesrc
 
