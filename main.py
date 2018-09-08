@@ -79,9 +79,9 @@ def facereg (imagesrc):
     # Detect faces in the image
     faces = faceCascade.detectMultiScale(
         gray,
-        scaleFactor=1.1,
-        minNeighbors=2,
-        minSize=(10, 10),
+        scaleFactor=1.3,
+        minNeighbors=3,
+        minSize=(15, 15),
         flags=cv2.CASCADE_SCALE_IMAGE
     )
 
@@ -107,6 +107,7 @@ class Window(Frame):
         FryButton  = Button(self, text="Fry one step", command=self.frystep, width=10, height=1)
         QuitButton = Button(self, text="Quit", command=self.quit, width=10, height=1)
         fileButton = Button(self, text="Open File", command=self.openfile, width=10, height=1)
+        refryButton = Button(self, text="Refry", command=self.refry, width=10, height=1)
         self.HSV = IntVar()
         HSVButton = Checkbutton(self, text="HSV", variable=self.HSV, )
         self.scalemean = Scale(self, from_=0, to=10, orient=HORIZONTAL, tickinterval=0.25)
@@ -158,6 +159,7 @@ class Window(Frame):
         QuitButton.place(x=440, y=560)
         HSVButton.place(x=40, y=580)
         fileButton.place(x=340, y=580)
+        refryButton.place(x=440, y=580)
         self.scalemean.place(x=80, y=610)
         self.scalevar.place(x=80, y=650)
         self.scalemean.set(int(1))
@@ -195,6 +197,9 @@ class Window(Frame):
             self.label.configure(image=new_image)
             self.label.image = new_image
 
+    def refry(self):
+        self.progress["value"] = 0
+        
     def quit(self):
         exit()
 
