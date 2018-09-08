@@ -2,36 +2,38 @@
 
 from tkinter import *
 from tkinter import ttk
+from tkinter import filedialog
 
 from PIL import ImageTk, Image
 
 import numpy as np
 import cv2
 
+
 def noise(image, hsv, mean, var):
-      imagecv = np.array(image)
-      if(hsv):
-          imagecv = cv2.cvtColor(imagecv, cv2.COLOR_RGB2HSV)
+    imagecv = np.array(image)
+    if hsv:
+        imagecv = cv2.cvtColor(imagecv, cv2.COLOR_RGB2HSV)
 
-      row,col,ch = imagecv.shape
-      sigma = var**0.5
-      gauss = np.random.normal(mean,sigma,(row,col,ch))
-      gauss = gauss.reshape(row,col,ch)
-      noisy = imagecv + gauss
-      if (hsv):
-          noisy = cv2.cvtColor(noisy.astype('uint8'), cv2.COLOR_HSV2RGB)
+    row,col,ch = imagecv.shape
+    sigma = var**0.5
+    gauss = np.random.normal(mean,sigma,(row,col,ch))
+    gauss = gauss.reshape(row,col,ch)
+    noisy = imagecv + gauss
+    if hsv:
+        noisy = cv2.cvtColor(noisy.astype('uint8'), cv2.COLOR_HSV2RGB)
+    image = Image.fromarray(noisy.astype('uint8'))
+    return image
 
-      #im = Image.fromarray(noisy)
-      image = Image.fromarray(noisy.astype('uint8'))
-      return image
+
 def ripple(image, xA, xw, yA, yw):
     imagecv = np.array(image)
-    if(xA == 0):
+    if xA == 0:
         Ax = 0
     else:
         Ax = imagecv.shape[1] / xA
     wx = xw / imagecv.shape[0]
-    if(yA == 0):
+    if yA == 0:
         Ay = 0
     else:
         Ay = imagecv.shape[0] / yA
@@ -59,6 +61,7 @@ class Window(Frame):
         self.pack(fill=BOTH, expand=1)
         FryButton  = Button(self, text="Fry one step", command=self.frystep, width=10, height=1)
         QuitButton = Button(self, text="Quit", command=self.quit, width=10, height=1)
+        fileButton = Button(self, text="Open File", command=self.openfile, width=10, height=1)
         self.HSV = IntVar()
         HSVButton = Checkbutton(self, text="HSV", variable=self.HSV, )
         self.scalemean = Scale(self, from_=0, to=10, orient=HORIZONTAL, tickinterval=0.25)
@@ -86,6 +89,7 @@ class Window(Frame):
         T3.place(x=250, y=620)
         T4.place(x=250, y=660)
 
+        ##sin params
         self.xA = StringVar()
         self.xw = StringVar()
         self.yA = StringVar()
@@ -106,6 +110,7 @@ class Window(Frame):
         FryButton.place(x=340, y=560)
         QuitButton.place(x=440, y=560)
         HSVButton.place(x=40, y=580)
+        fileButton.place(x=340, y=580)
         self.scalemean.place(x=80, y=610)
         self.scalevar.place(x=80, y=650)
         self.scalemean.set(int(1))
@@ -117,9 +122,9 @@ class Window(Frame):
 
     def frystep(self):
         print("Fry that picture")
-        if (self.progress["value"] < 5):
+        if self.progress["value"] < 5:
             self.imagesrc = noise(self.imagesrc, self.HSV.get(), self.scalemean.get(), self.scalevar.get())
-        elif (self.progress["value"] < 10):
+        elif self.progress["value"] < 10:
             print("ripple")
             self.imagesrc = ripple(self.imagesrc, int(self.xA.get()), int(self.xw.get()), int(self.yA.get()), int(self.yw.get()))
         new_image = ImageTk.PhotoImage(self.imagesrc)
@@ -128,13 +133,20 @@ class Window(Frame):
         #print(type(new_image))
         self.progress["value"] += 5
 
+    def openfile(self):
+        filename = filedialog.askopenfilename(initialdir="/", title="Select file",
+                                                     filetypes=(("jpeg files", "*.jpg"), ("all files", "*.*")))
+        if filename:
+            self.imagesrc = Image.open(filename)
+            new_image = ImageTk.PhotoImage(self.imagesrc)
+            self.label.configure(image=new_image)
+            self.label.image = new_image
+
     def quit(self):
         exit()
 
 
 if __name__ == '__main__':
-    print("Hello World my old friend")
-
     root = Tk()
     root.resizable(width=False, height=False)
     root.geometry("550x700")
