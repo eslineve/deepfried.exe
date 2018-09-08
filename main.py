@@ -66,8 +66,8 @@ def facereg (imagesrc):
     faces = faceCascade.detectMultiScale(
         gray,
         scaleFactor=1.1,
-        minNeighbors=5,
-        minSize=(30, 30),
+        minNeighbors=2,
+        minSize=(10, 10),
         flags=cv2.CASCADE_SCALE_IMAGE
     )
 
@@ -113,7 +113,9 @@ class Window(Frame):
         self.progress = ttk.Progressbar(self, orient="horizontal",
                                         length=310, mode="determinate")
         self.imagesrc = Image.open("Fry.jpg")
-        self.image = ImageTk.PhotoImage(self.imagesrc)
+        imageresized = self.imagesrc.copy()  # #copy is needed as image.thumbnail does not return
+        imageresized.thumbnail((530, 530), Image.ANTIALIAS)
+        self.image = ImageTk.PhotoImage(imageresized)
         self.label = Label(image=self.image, width=530, height=530)
         self.label.image = self.image # keep a reference!
         self.label.place(x=10, y=10)
@@ -171,7 +173,9 @@ class Window(Frame):
         elif self.progress["value"] < 15:
             print("ripple")
             self.imagesrc = ripple(self.imagesrc, int(self.xA.get()), int(self.xw.get()), int(self.yA.get()), int(self.yw.get()))
-        new_image = ImageTk.PhotoImage(self.imagesrc)
+        imageresized = self.imagesrc.copy()
+        imageresized.thumbnail((530, 530), Image.ANTIALIAS)
+        new_image = ImageTk.PhotoImage(imageresized)
         self.label.configure(image=new_image)
         self.label.image = new_image
         #print(type(new_image))
@@ -182,7 +186,9 @@ class Window(Frame):
                                                      filetypes=(("jpeg files", "*.jpg"), ("all files", "*.*")))
         if filename:
             self.imagesrc = Image.open(filename)
-            new_image = ImageTk.PhotoImage(self.imagesrc)
+            imageresized = self.imagesrc.copy()
+            imageresized.thumbnail((530, 530), Image.ANTIALIAS)
+            new_image = ImageTk.PhotoImage(imageresized)
             self.label.configure(image=new_image)
             self.label.image = new_image
 
