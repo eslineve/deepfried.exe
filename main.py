@@ -48,6 +48,34 @@ def ripple(image, xA, xw, yA, yw):
     image = Image.fromarray(imagecv.astype('uint8'))
     return image
 
+def facereg (imagesrc):
+    # Get user supplied values
+    cascPath = "haarcascade_frontalface_default.xml"
+
+    # Create the haar cascade
+    faceCascade = cv2.CascadeClassifier(cascPath)
+
+    # Read the image
+    image = np.array(imagesrc)
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    # Detect faces in the image
+    faces = faceCascade.detectMultiScale(
+        gray,
+        scaleFactor=1.1,
+        minNeighbors=5,
+        minSize=(30, 30),
+        flags=cv2.CASCADE_SCALE_IMAGE
+    )
+
+    print("Found {0} faces!".format(len(faces)))
+
+    # Draw a rectangle around the faces
+    for (x, y, w, h) in faces:
+        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 0), 2)
+    imagesrc = Image.fromarray(image.astype('uint8'))
+    return imagesrc
+
 class Window(Frame):
     def __init__(self, master=None):
         Frame.__init__(self, master)
@@ -123,8 +151,10 @@ class Window(Frame):
     def frystep(self):
         print("Fry that picture")
         if self.progress["value"] < 5:
-            self.imagesrc = noise(self.imagesrc, self.HSV.get(), self.scalemean.get(), self.scalevar.get())
+            self.imagesrc = facereg(self.imagesrc)
         elif self.progress["value"] < 10:
+            self.imagesrc = noise(self.imagesrc, self.HSV.get(), self.scalemean.get(), self.scalevar.get())
+        elif self.progress["value"] < 15:
             print("ripple")
             self.imagesrc = ripple(self.imagesrc, int(self.xA.get()), int(self.xw.get()), int(self.yA.get()), int(self.yw.get()))
         new_image = ImageTk.PhotoImage(self.imagesrc)
