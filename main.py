@@ -6,8 +6,13 @@ from tkinter import filedialog
 
 from PIL import ImageTk, Image
 
+import pytesseract
+import os
+
 import numpy as np
 import cv2
+import time
+from imutils.object_detection import non_max_suppression
 
 def placeimage(image1, image2, x, y, w, h):
     image2 = cv2.resize(image2, (w, h))
@@ -61,6 +66,162 @@ def ripple(image, xA, xw, yA, yw):
         imagecv[:, i] = np.roll(imagecv[:, i], int(shifty(i)), 0)
     image = Image.fromarray(imagecv.astype('uint8'))
     return image
+
+def Bemoji (imagesrc):
+    image = np.array(imagesrc)
+
+    # USAGE
+    # python text_detection.py --image images/lebron_james.jpg --east frozen_east_text_detection.pb
+
+    # import the necessary packages
+
+    # construct the argument parser and parse the arguments
+
+    # load the input image and grab the image dimensions
+    min_conf = 0.3
+    eastpath = "frozen_east_text_detection.pb"
+    orig = image.copy()
+    (H, W) = image.shape[:2]
+    (newW, newH) = (640, 640)
+    rW = W / float(newW)
+    rH = H / float(newH)
+
+    image = cv2.resize(image, (newW, newH))
+    (H, W) = image.shape[:2]
+
+    # define the two output layer names for the EAST detector model that
+    # we are interested -- the first is the output probabilities and the
+    # second can be used to derive the bounding box coordinates of text
+    layerNames = [
+        "feature_fusion/Conv_7/Sigmoid",
+        "feature_fusion/concat_3"]
+
+    # load the pre-trained EAST text detector
+    print("[INFO] loading EAST text detector...")
+    net = cv2.dnn.readNet(eastpath)
+
+    # construct a blob from the image and then perform a forward pass of
+    # the model to obtain the two output layer sets
+    blob = cv2.dnn.blobFromImage(image, 1.0, (W, H),
+                                 (123.68, 116.78, 103.94), swapRB=True, crop=False)
+    start = time.time()
+    net.setInput(blob)
+    (scores, geometry) = net.forward(layerNames)
+    end = time.time()
+
+    # show timing information on text prediction
+    print("[INFO] text detection took {:.6f} seconds".format(end - start))
+
+    # grab the number of rows and columns from the scores volume, then
+    # initialize our set of bounding box rectangles and corresponding
+    # confidence scores
+    (numRows, numCols) = scores.shape[2:4]
+    rects = []
+    confidences = []
+
+    # loop over the number of rows
+    for y in range(0, numRows):
+        # extract the scores (probabilities), followed by the geometrical
+        # data used to derive potential bounding box coordinates that
+        # surround text
+        scoresData = scores[0, 0, y]
+        xData0 = geometry[0, 0, y]
+        xData1 = geometry[0, 1, y]
+        xData2 = geometry[0, 2, y]
+        xData3 = geometry[0, 3, y]
+        anglesData = geometry[0, 4, y]
+
+        # loop over the number of columns
+        for x in range(0, numCols):
+            # if our score does not have sufficient probability, ignore it
+            if scoresData[x] < min_conf:
+                continue
+
+            # compute the offset factor as our resulting feature maps will
+            # be 4x smaller than the input image
+            (offsetX, offsetY) = (x * 4.0, y * 4.0)
+
+            # extract the rotation angle for the prediction and then
+            # compute the sin and cosine
+            angle = anglesData[x]
+            cos = np.cos(angle)
+            sin = np.sin(angle)
+
+            # use the geometry volume to derive the width and height of
+            # the bounding box
+            h = xData0[x] + xData2[x]
+            w = xData1[x] + xData3[x]
+
+            # compute both the starting and ending (x, y)-coordinates for
+            # the text prediction bounding box
+            endX = int(offsetX + (cos * xData1[x]) + (sin * xData2[x]))
+            endY = int(offsetY - (sin * xData1[x]) + (cos * xData2[x]))
+            startX = int(endX - w)
+            startY = int(endY - h)
+
+            # add the bounding box coordinates and probability score to
+            # our respective lists
+            rects.append((startX, startY, endX, endY))
+            confidences.append(scoresData[x])
+
+    # apply non-maxima suppression to suppress weak, overlapping bounding
+    # boxes
+    boxes = non_max_suppression(np.array(rects), probs=confidences)
+
+    # loop over the bounding boxes
+    #for (startX, startY, endX, endY) in boxes:
+        # scale the bounding box coordinates based on the respective
+        # ratios
+        #startX = int(startX*rW)
+        #startY = int(startY*rH)
+        #endX = int(endX*rW)
+        #endY = int(endY*rH)
+
+        # draw the bounding box on the image
+        #cv2.rectangle(orig, (startX, startY), (endX, endY), (0, 255, 0), 2)
+
+    # show the output image
+
+    for (startX, startY, endX, endY) in boxes:
+        roi = image[startY:endY, startX:endX]
+        gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+
+        preprocess = "thresh"
+        # check to see if we should apply thresholding to preprocess the
+        # image
+        if preprocess == "thresh":
+            gray = cv2.threshold(gray, 0, 255,
+                                 cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+
+        # make a check to see if median blurring should be done to remove
+        # noise
+        elif preprocess == "blur":
+            gray = cv2.medianBlur(gray, 3)
+
+        # write the grayscale image to disk as a temporary file so we can
+        # apply OCR to it
+        filename = "{}.png".format(os.getpid())
+        cv2.imwrite(filename, gray)
+
+        text = pytesseract.image_to_boxes(Image.open(filename))
+        os.remove(filename)
+        print(text)
+        text2 = str.split(text)
+
+        if text2:
+            dX = [int(text2[x*6 + 1]) for x in range (0, (int(len(text2)/6)))]
+            dY = [int(text2[x * 6 + 2]) for x in range (0, (int(len(text2)/6)))]
+            dW = [int(text2[x * 6 + 2]) for x in range (0, (int(len(text2)/6)))]
+            dH = [int(text2[x * 6 + 4]) for x in range (0, (int(len(text2)/6)))]
+            print(str(dX))
+            startX = [int((startX + dX[x]) * rW) for x in range (0, (int(len(text2)/6)))]
+            startY = [int((startY + dY[x]) * rH) for x in range (0, (int(len(text2)/6)))]
+            endX = [int((endX + dX[x] - dH[x]) * rW) for x in range (0, (int(len(text2)/6)))]
+            endY = [int((endY + dY[x] - dW[x]) * rH) for x in range (0, (int(len(text2)/6)))]
+            for x in range (0, (int(len(text2)/6))):
+                cv2.rectangle(orig, (startX[x], startY[x]), (endX[x], endY[x]), (0, 255, 0), 2)
+    imagesrc = Image.fromarray(orig.astype('uint8'))
+    return imagesrc
 
 def facereg (imagesrc):
     # Get user supplied values
@@ -150,9 +311,9 @@ class Window(Frame):
         self.Exw.place(x=350, y=620)
         self.EyA.place(x=300, y=660)
         self.Eyw.place(x=350, y=660)
-        self.xA.set(50)
+        self.xA.set(100)
         self.xw.set(3)
-        self.yA.set(0)
+        self.yA.set(100)
         self.yw.set(3)
 
         FryButton.place(x=340, y=560)
@@ -172,10 +333,12 @@ class Window(Frame):
     def frystep(self):
         print("Fry that picture")
         if self.progress["value"] < 5:
-            self.imagesrc = facereg(self.imagesrc)
+            self.imagesrc = Bemoji(self.imagesrc)
         elif self.progress["value"] < 10:
-            self.imagesrc = noise(self.imagesrc, self.HSV.get(), self.scalemean.get(), self.scalevar.get())
+            self.imagesrc = facereg(self.imagesrc)
         elif self.progress["value"] < 15:
+            self.imagesrc = noise(self.imagesrc, self.HSV.get(), self.scalemean.get(), self.scalevar.get())
+        elif self.progress["value"] < 20:
             print("ripple")
             self.imagesrc = ripple(self.imagesrc, int(self.xA.get()), int(self.xw.get()), int(self.yA.get()), int(self.yw.get()))
         imageresized = self.imagesrc.copy()
@@ -199,7 +362,7 @@ class Window(Frame):
 
     def refry(self):
         self.progress["value"] = 0
-        
+
     def quit(self):
         exit()
 
