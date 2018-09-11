@@ -13,6 +13,7 @@ import numpy as np
 import cv2
 import time
 from imutils.object_detection import non_max_suppression
+from random import randrange, uniform
 
 def placeimage(image1, image2, x, y, w, h):
     image2 = cv2.resize(image2, (w, h))
@@ -71,7 +72,7 @@ def ripple(image, xA, xw, yA, yw):
 def Bemoji (imagesrc):
     image = np.array(imagesrc)
 
-    scalefactor = 2
+    scalefactor = 1
     scalevar = (scalefactor - 1)/2
 
     # USAGE
@@ -231,7 +232,7 @@ def Bemoji (imagesrc):
             letter = [text2[x * 6] for x in range (0, (int(len(text2)/6)))]
 
             for x in range (0, (int(len(text2)/6))):
-                if (letter[x] == "F") | (letter[x] == "f"):
+                if (letter[x] == "E") | (letter[x] == "e"):
                     placeimage(orig, Bimage, startX[x]-int(scalevar*(dW[x]*rH)), startY[x]-int(scalevar*(dH[x]*rW)), int(dW[x]*rH)*scalefactor, int(dH[x]*rW)*scalefactor)
     imagesrc = Image.fromarray(orig.astype('uint8'))
     return imagesrc
@@ -269,11 +270,29 @@ def facereg (imagesrc):
 
 def JPEG(imgsrc):
     imagecv = np.array(imgsrc)
-    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 0]
+    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 10]
     result, encimg = cv2.imencode('.jpg', imagecv, encode_param)
     decimg = cv2.imdecode(encimg, 1)
     imagesrc = Image.fromarray(decimg.astype('uint8'))
     return imagesrc
+
+def hunEmoji(imgsrc):
+    randsize = randrange(3, 10)
+    imagecv = np.array(imgsrc)
+    cvW = imagecv.shape[0]
+    cvH = imagecv.shape[1]
+    rW = randrange(cvW - int(cvW/randsize))
+    rH = randrange(cvH - int(cvH/randsize))
+
+    hunimage = cv2.imread("100.png", -1)
+    b, g, r, a = cv2.split(hunimage)
+    hunimage = cv2.merge((r, g, b, a))
+
+    image = placeimage(imagecv, hunimage, rW, rH, int(cvW/randsize), int(cvH/randsize))
+
+    imagesrc = Image.fromarray(image.astype('uint8'))
+    return imagesrc
+
 
 class Window(Frame):
     def __init__(self, master=None):
@@ -354,7 +373,7 @@ class Window(Frame):
     def frystep(self):
         print("Fry that picture")
         if self.progress["value"] < 5:
-            self.imagesrc = Bemoji(self.imagesrc)
+            self.imagesrc = hunEmoji(self.imagesrc)
         elif self.progress["value"] < 10:
             self.imagesrc = facereg(self.imagesrc)
         elif self.progress["value"] < 15:
