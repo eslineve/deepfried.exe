@@ -63,6 +63,7 @@ def ripple(image, xA, xw, yA, yw):
 
     for i in range(imagecv.shape[0]):
         imagecv[i, :] = np.roll(imagecv[i, :], int(shiftx(i)), 0)
+    for i in range(imagecv.shape[1]):
         imagecv[:, i] = np.roll(imagecv[:, i], int(shifty(i)), 0)
     image = Image.fromarray(imagecv.astype('uint8'))
     return image
@@ -70,7 +71,7 @@ def ripple(image, xA, xw, yA, yw):
 def Bemoji (imagesrc):
     image = np.array(imagesrc)
 
-    scalefactor = 1
+    scalefactor = 2
     scalevar = (scalefactor - 1)/2
 
     # USAGE
@@ -81,7 +82,7 @@ def Bemoji (imagesrc):
     # construct the argument parser and parse the arguments
 
     # load the input image and grab the image dimensions
-    min_conf = 0.3
+    min_conf = 0.1
     eastpath = "frozen_east_text_detection.pb"
     orig = image.copy()
     (H, W) = image.shape[:2]
@@ -209,8 +210,10 @@ def Bemoji (imagesrc):
         # apply OCR to it
         filename = "{}.png".format(os.getpid())
         cv2.imwrite(filename, gray)
-
-        text = pytesseract.image_to_boxes(Image.open(filename))
+        if gray is not None:
+            text = pytesseract.image_to_boxes(Image.open(filename))
+        else:
+            text = ""
         os.remove(filename)
         print(text)
         text2 = str.split(text)
@@ -228,8 +231,8 @@ def Bemoji (imagesrc):
             letter = [text2[x * 6] for x in range (0, (int(len(text2)/6)))]
 
             for x in range (0, (int(len(text2)/6))):
-                if (letter[x] == "r") | (letter[x] == "R"):
-                    placeimage(orig, Bimage, startX[x]-int(scalevar*(dW[x]*rH)), startY[x]-int(scalevar*(dH[x]*rW)), int(dW[x]*rH)*2, int(dH[x]*rW)*2)
+                if (letter[x] == "F") | (letter[x] == "f"):
+                    placeimage(orig, Bimage, startX[x]-int(scalevar*(dW[x]*rH)), startY[x]-int(scalevar*(dH[x]*rW)), int(dW[x]*rH)*scalefactor, int(dH[x]*rW)*scalefactor)
     imagesrc = Image.fromarray(orig.astype('uint8'))
     return imagesrc
 
@@ -262,6 +265,14 @@ def facereg (imagesrc):
     for (x, y, w, h) in faces:
         image = placeimage(image, cryimage, x, y, w, h)
     imagesrc = Image.fromarray(image.astype('uint8'))
+    return imagesrc
+
+def JPEG(imgsrc):
+    imagecv = np.array(imgsrc)
+    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 0]
+    result, encimg = cv2.imencode('.jpg', imagecv, encode_param)
+    decimg = cv2.imdecode(encimg, 1)
+    imagesrc = Image.fromarray(decimg.astype('uint8'))
     return imagesrc
 
 class Window(Frame):
@@ -351,6 +362,8 @@ class Window(Frame):
         elif self.progress["value"] < 20:
             print("ripple")
             self.imagesrc = ripple(self.imagesrc, int(self.xA.get()), int(self.xw.get()), int(self.yA.get()), int(self.yw.get()))
+        elif self.progress["value"] < 25:
+            self.imagesrc = JPEG(self.imagesrc)
         imageresized = self.imagesrc.copy()
         imageresized.thumbnail((530, 530), Image.ANTIALIAS)
         new_image = ImageTk.PhotoImage(imageresized)
