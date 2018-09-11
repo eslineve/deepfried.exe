@@ -70,6 +70,9 @@ def ripple(image, xA, xw, yA, yw):
 def Bemoji (imagesrc):
     image = np.array(imagesrc)
 
+    scalefactor = 1
+    scalevar = (scalefactor - 1)/2
+
     # USAGE
     # python text_detection.py --image images/lebron_james.jpg --east frozen_east_text_detection.pb
 
@@ -181,6 +184,10 @@ def Bemoji (imagesrc):
         #cv2.rectangle(orig, (startX, startY), (endX, endY), (0, 255, 0), 2)
 
     # show the output image
+    Bimage = cv2.imread("B.png", -1)
+    b, g, r, a = cv2.split(Bimage)
+    Bimage = cv2.merge((r, g, b, a))
+
 
     for (startX, startY, endX, endY) in boxes:
         roi = image[startY:endY, startX:endX]
@@ -211,15 +218,18 @@ def Bemoji (imagesrc):
         if text2:
             dX = [int(text2[x*6 + 1]) for x in range (0, (int(len(text2)/6)))]
             dY = [int(text2[x * 6 + 2]) for x in range (0, (int(len(text2)/6)))]
-            dW = [int(text2[x * 6 + 2]) for x in range (0, (int(len(text2)/6)))]
-            dH = [int(text2[x * 6 + 4]) for x in range (0, (int(len(text2)/6)))]
-            print(str(dX))
+            dW = [int(text2[x * 6 + 3])-int(text2[x*6 + 1]) for x in range (0, (int(len(text2)/6)))]
+            dH = [int(text2[x * 6 + 4])-int(text2[x * 6 + 2]) for x in range (0, (int(len(text2)/6)))]
+            print(str(dW))
             startX = [int((startX + dX[x]) * rW) for x in range (0, (int(len(text2)/6)))]
             startY = [int((startY + dY[x]) * rH) for x in range (0, (int(len(text2)/6)))]
-            endX = [int((endX + dX[x] - dH[x]) * rW) for x in range (0, (int(len(text2)/6)))]
-            endY = [int((endY + dY[x] - dW[x]) * rH) for x in range (0, (int(len(text2)/6)))]
+            endX = [int((endX + dX[x] - dW[x]) * rH) for x in range(0, (int(len(text2) / 6)))]
+            endY = [int((endY + dY[x] - dH[x]) * rW) for x in range(0, (int(len(text2) / 6)))]
+            letter = [text2[x * 6] for x in range (0, (int(len(text2)/6)))]
+
             for x in range (0, (int(len(text2)/6))):
-                cv2.rectangle(orig, (startX[x], startY[x]), (endX[x], endY[x]), (0, 255, 0), 2)
+                if (letter[x] == "r") | (letter[x] == "R"):
+                    placeimage(orig, Bimage, startX[x]-int(scalevar*(dW[x]*rH)), startY[x]-int(scalevar*(dH[x]*rW)), int(dW[x]*rH)*2, int(dH[x]*rW)*2)
     imagesrc = Image.fromarray(orig.astype('uint8'))
     return imagesrc
 
