@@ -276,12 +276,13 @@ def JPEG(imgsrc, quality):
     return imagesrc
 
 def hunEmoji(imgsrc):
-    randsize = randrange(3, 10)
+
     imagecv = np.array(imgsrc)
-    cvW = imagecv.shape[0]
-    cvH = imagecv.shape[1]
-    rW = randrange(cvW - int(cvW/randsize))
-    rH = randrange(cvH - int(cvH/randsize))
+    randsize = randrange(3, 10)
+    cvW = imagecv.shape[1]
+    cvH = imagecv.shape[0]
+    rW = randrange(int(cvW/randsize), cvW - int(cvW/randsize))
+    rH = randrange(int(cvH/randsize), cvH - int(cvH/randsize))
 
     hunimage = cv2.imread("100.png", -1)
     b, g, r, a = cv2.split(hunimage)
