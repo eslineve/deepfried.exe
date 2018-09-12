@@ -72,7 +72,7 @@ def ripple(image, xA, xw, yA, yw):
 def Bemoji (imagesrc):
     image = np.array(imagesrc)
 
-    scalefactor = 1
+    scalefactor = 2
     scalevar = (scalefactor - 1)/2
 
     # USAGE
@@ -188,8 +188,8 @@ def Bemoji (imagesrc):
     Bimage = cv2.imread("B.png", -1)
     b, g, r, a = cv2.split(Bimage)
     Bimage = cv2.merge((r, g, b, a))
-
-
+    print("[INFO] loading Tesseract...")
+    start = time.time()
     for (startX, startY, endX, endY) in boxes:
         roi = image[startY:endY, startX:endX]
         gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
@@ -209,12 +209,14 @@ def Bemoji (imagesrc):
         # write the grayscale image to disk as a temporary file so we can
         # apply OCR to it
         filename = "{}.png".format(os.getpid())
-        cv2.imwrite(filename, gray)
+
         if gray is not None:
+            cv2.imwrite(filename, gray)
             text = pytesseract.image_to_boxes(Image.open(filename))
+            os.remove(filename)
         else:
             text = ""
-        os.remove(filename)
+
         print(text)
         text2 = str.split(text)
 
@@ -232,7 +234,14 @@ def Bemoji (imagesrc):
 
             for x in range (0, (int(len(text2)/6))):
                 if (letter[x] == "G") | (letter[x] == "g") | (letter[x] == "B") | (letter[x] == "b"):
-                    placeimage(orig, Bimage, startX[x]-int(scalevar*(dW[x]*rH)), startY[x]-int(scalevar*(dH[x]*rW)), int(dW[x]*rH)*scalefactor, int(dH[x]*rW)*scalefactor)
+                    try:
+                        placeimage(orig, Bimage, startX[x]-int(scalevar*(dW[x]*rH)), startY[x]-int(scalevar*(dH[x]*rW)), int(dW[x]*rH)*scalefactor, int(dH[x]*rW)*scalefactor)
+                    except ValueError:
+                        placeimage(orig, Bimage, startX[x],
+                                   startY[x], int(dW[x] * rH),
+                                   int(dH[x] * rW))
+    end = time.time()
+    print("[INFO] letter detection took {:.6f} seconds".format(end - start))
     imagesrc = Image.fromarray(orig.astype('uint8'))
     return imagesrc
 
@@ -259,7 +268,7 @@ def facereg (imagesrc):
         flags=cv2.CASCADE_SCALE_IMAGE
     )
 
-    print("Found {0} face(s)".format(len(faces)))
+    print("[INFO] Found {0} face(s)".format(len(faces)))
 
     # Draw a rectangle around the faces
     for (x, y, w, h) in faces:
@@ -379,7 +388,7 @@ class Window(Frame):
         self.progress["maximum"] = 100
 
     def frystep(self):
-        print("Fry that picture")
+        print("[INFO] Frying")
         if self.progress["value"] < 5:
             self.imagesrc = Bemoji(self.imagesrc)
         elif self.progress["value"] < 10:
@@ -389,7 +398,6 @@ class Window(Frame):
         elif self.progress["value"] < 20:
             self.imagesrc = noise(self.imagesrc, self.HSV.get(), self.scalemean.get(), self.scalevar.get())
         elif self.progress["value"] < 25:
-            print("ripple")
             self.imagesrc = ripple(self.imagesrc, int(self.xA.get()), int(self.xw.get()), int(self.yA.get()), int(self.yw.get()))
         elif self.progress["value"] < 30:
             self.imagesrc = JPEG(self.imagesrc, 10)
