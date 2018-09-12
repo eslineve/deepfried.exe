@@ -215,14 +215,28 @@ def Bemoji (imagesrc):
 
             for x in range (0, (int(len(text2)/6))):
                 if (letter[x] == "G") | (letter[x] == "g") | (letter[x] == "B") | (letter[x] == "b"):
+                    exp = 0
                     try:
                         placeimage(orig, Bimage, startX[x]-int(scalevar*(dW[x]*rH)),
                                    startY[x]-int(scalevar*(dH[x]*rW)), int(dW[x]*rH)*scalefactor,
                                    int(dH[x]*rW)*scalefactor)
                     except ValueError:
-                        placeimage(orig, Bimage, startX[x],
-                                   startY[x], int(dW[x] * rH),
-                                   int(dH[x] * rW))
+                        exp = 1
+                    if exp:
+                        scalecount = 1.9
+                        switch = 0
+                        while scalecount > 0:
+                            try:
+                                placeimage(orig, Bimage, startX[x] - int(((scalecount - 1) / 2) * (dW[x] * rH)),
+                                           startY[x] - int(((scalecount - 1) / 2) * (dH[x] * rW)),
+                                           int(dW[x] * rH * scalecount),
+                                           int(dH[x] * rW * scalecount))
+                            except ValueError:
+                                scalecount = scalecount - 0.1
+                            else:
+                                break
+
+
     end = time.time()
     print("[INFO] letter detection took {:.6f} seconds".format(end - start))
     imagesrc = Image.fromarray(orig.astype('uint8'))
