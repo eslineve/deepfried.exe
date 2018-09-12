@@ -9,11 +9,17 @@ from PIL import ImageTk, Image
 import pytesseract
 import os
 
+import math
 import numpy as np
 import cv2
 import time
 from imutils.object_detection import non_max_suppression
 from random import randrange, uniform
+
+from platform import system
+
+if system().lower() == "windows":
+  pytesseract.pytesseract.tesseract_cmd = "C:\\Program Files (x86)\\Tesseract-OCR\\tesseract.exe"
 
 def placeimage(image1, image2, x, y, w, h):
     image2 = cv2.resize(image2, (w, h))
@@ -68,6 +74,38 @@ def ripple(image, xA, xw, yA, yw):
         imagecv[:, i] = np.roll(imagecv[:, i], int(shifty(i)), 0)
     image = Image.fromarray(imagecv.astype('uint8'))
     return image
+
+def Bulge(image, X, Y, R):
+  img = np.array(image)
+
+  map_x = np.zeros(img.shape[:2],np.float32)
+  map_y = np.zeros(img.shape[:2],np.float32)
+  rows,cols = img.shape[:2]
+  R = 50
+
+  for j in range(rows):
+    for i in range(cols):
+      map_x.itemset((j,i),i)
+      map_y.itemset((j,i),j)
+
+  for j in range(rows):
+    for i in range(cols):
+      r = math.sqrt(math.pow(i - X, 2) + math.pow(j - Y, 2))
+      if r > R:
+        continue
+      a = 0
+      if(j != Y):
+        a = math.atan((i - X)/(j - Y))
+      rn = -math.pow(r,2.5)/(10*R)
+      if j < Y:
+        map_x.itemset((j,i), rn*math.sin(a) + X)
+        map_y.itemset((j,i), rn*math.cos(a) + Y)
+      else:
+        map_x.itemset((j,i), rn*math.sin(-a) + X)
+        map_y.itemset((j,i), -rn*math.cos(a) + Y)
+
+  dst = cv2.remap(img,map_x,map_y,cv2.INTER_LINEAR)
+  return Image.fromarray(dst.astype('uint8'))
 
 def Bemoji (imagesrc):
     image = np.array(imagesrc)
@@ -407,6 +445,8 @@ class Window(Frame):
             self.imagesrc = saturate(self.imagesrc)
         elif self.progress["value"] < 40:
             self.imagesrc = JPEG(self.imagesrc, 9)
+        elif self.progress["value"] < 45:
+            self.imagesrc = Bulge(self.imagesrc, randrange(100,400), randrange(100,400), 100)
         imageresized = self.imagesrc.copy()
         imageresized.thumbnail((530, 530), Image.ANTIALIAS)
         new_image = ImageTk.PhotoImage(imageresized)
