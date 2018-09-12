@@ -185,7 +185,6 @@ def Bemoji (imagesrc):
         # draw the bounding box on the image
         #cv2.rectangle(orig, (startX, startY), (endX, endY), (0, 255, 0), 2)
 
-    # show the output image
     Bimage = cv2.imread("B.png", -1)
     b, g, r, a = cv2.split(Bimage)
     Bimage = cv2.merge((r, g, b, a))
@@ -224,15 +223,15 @@ def Bemoji (imagesrc):
             dY = [int(text2[x * 6 + 2]) for x in range (0, (int(len(text2)/6)))]
             dW = [int(text2[x * 6 + 3])-int(text2[x*6 + 1]) for x in range (0, (int(len(text2)/6)))]
             dH = [int(text2[x * 6 + 4])-int(text2[x * 6 + 2]) for x in range (0, (int(len(text2)/6)))]
-            print(str(dW))
+            #print(str(dW))
             startX = [int((startX + dX[x]) * rW) for x in range (0, (int(len(text2)/6)))]
             startY = [int((startY + dY[x]) * rH) for x in range (0, (int(len(text2)/6)))]
-            endX = [int((endX + dX[x] - dW[x]) * rH) for x in range(0, (int(len(text2) / 6)))]
-            endY = [int((endY + dY[x] - dH[x]) * rW) for x in range(0, (int(len(text2) / 6)))]
+            #endX = [int((endX + dX[x] - dW[x]) * rH) for x in range(0, (int(len(text2) / 6)))]
+            #endY = [int((endY + dY[x] - dH[x]) * rW) for x in range(0, (int(len(text2) / 6)))]
             letter = [text2[x * 6] for x in range (0, (int(len(text2)/6)))]
 
             for x in range (0, (int(len(text2)/6))):
-                if (letter[x] == "E") | (letter[x] == "e"):
+                if (letter[x] == "G") | (letter[x] == "g") | (letter[x] == "B") | (letter[x] == "b"):
                     placeimage(orig, Bimage, startX[x]-int(scalevar*(dW[x]*rH)), startY[x]-int(scalevar*(dH[x]*rW)), int(dW[x]*rH)*scalefactor, int(dH[x]*rW)*scalefactor)
     imagesrc = Image.fromarray(orig.astype('uint8'))
     return imagesrc
@@ -268,9 +267,9 @@ def facereg (imagesrc):
     imagesrc = Image.fromarray(image.astype('uint8'))
     return imagesrc
 
-def JPEG(imgsrc):
+def JPEG(imgsrc, quality):
     imagecv = np.array(imgsrc)
-    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), 10]
+    encode_param = [int(cv2.IMWRITE_JPEG_QUALITY), quality]
     result, encimg = cv2.imencode('.jpg', imagecv, encode_param)
     decimg = cv2.imdecode(encimg, 1)
     imagesrc = Image.fromarray(decimg.astype('uint8'))
@@ -293,6 +292,14 @@ def hunEmoji(imgsrc):
     imagesrc = Image.fromarray(image.astype('uint8'))
     return imagesrc
 
+def saturate(imagesrc):
+    imagecv = np.array(imagesrc)
+    (h, s, v) = cv2.split(imagecv)
+    s = s * 2
+    s = np.clip(s, 0, 255)
+    image = cv2.merge([h, s, v])
+    imagesrc = Image.fromarray(image.astype('uint8'))
+    return imagesrc
 
 class Window(Frame):
     def __init__(self, master=None):
@@ -373,16 +380,22 @@ class Window(Frame):
     def frystep(self):
         print("Fry that picture")
         if self.progress["value"] < 5:
-            self.imagesrc = hunEmoji(self.imagesrc)
+            self.imagesrc = Bemoji(self.imagesrc)
         elif self.progress["value"] < 10:
             self.imagesrc = facereg(self.imagesrc)
         elif self.progress["value"] < 15:
-            self.imagesrc = noise(self.imagesrc, self.HSV.get(), self.scalemean.get(), self.scalevar.get())
+            self.imagesrc = hunEmoji(self.imagesrc)
         elif self.progress["value"] < 20:
+            self.imagesrc = noise(self.imagesrc, self.HSV.get(), self.scalemean.get(), self.scalevar.get())
+        elif self.progress["value"] < 25:
             print("ripple")
             self.imagesrc = ripple(self.imagesrc, int(self.xA.get()), int(self.xw.get()), int(self.yA.get()), int(self.yw.get()))
-        elif self.progress["value"] < 25:
-            self.imagesrc = JPEG(self.imagesrc)
+        elif self.progress["value"] < 30:
+            self.imagesrc = JPEG(self.imagesrc, 10)
+        elif self.progress["value"] < 35:
+            self.imagesrc = saturate(self.imagesrc)
+        elif self.progress["value"] < 40:
+            self.imagesrc = JPEG(self.imagesrc, 9)
         imageresized = self.imagesrc.copy()
         imageresized.thumbnail((530, 530), Image.ANTIALIAS)
         new_image = ImageTk.PhotoImage(imageresized)
