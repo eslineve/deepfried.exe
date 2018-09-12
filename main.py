@@ -110,15 +110,9 @@ def Bulge(image, X, Y, R):
 def Bemoji (imagesrc):
     image = np.array(imagesrc)
 
+    # set B emoji scaling
     scalefactor = 2
     scalevar = (scalefactor - 1)/2
-
-    # USAGE
-    # python text_detection.py --image images/lebron_james.jpg --east frozen_east_text_detection.pb
-
-    # import the necessary packages
-
-    # construct the argument parser and parse the arguments
 
     # load the input image and grab the image dimensions
     min_conf = 0.1
@@ -211,18 +205,6 @@ def Bemoji (imagesrc):
     # boxes
     boxes = non_max_suppression(np.array(rects), probs=confidences)
 
-    # loop over the bounding boxes
-    #for (startX, startY, endX, endY) in boxes:
-        # scale the bounding box coordinates based on the respective
-        # ratios
-        #startX = int(startX*rW)
-        #startY = int(startY*rH)
-        #endX = int(endX*rW)
-        #endY = int(endY*rH)
-
-        # draw the bounding box on the image
-        #cv2.rectangle(orig, (startX, startY), (endX, endY), (0, 255, 0), 2)
-
     Bimage = cv2.imread("B.png", -1)
     b, g, r, a = cv2.split(Bimage)
     Bimage = cv2.merge((r, g, b, a))
@@ -266,8 +248,7 @@ def Bemoji (imagesrc):
             #print(str(dW))
             startX = [int((startX + dX[x]) * rW) for x in range (0, (int(len(text2)/6)))]
             startY = [int((startY + dY[x]) * rH) for x in range (0, (int(len(text2)/6)))]
-            #endX = [int((endX + dX[x] - dW[x]) * rH) for x in range(0, (int(len(text2) / 6)))]
-            #endY = [int((endY + dY[x] - dH[x]) * rW) for x in range(0, (int(len(text2) / 6)))]
+
             letter = [text2[x * 6] for x in range (0, (int(len(text2)/6)))]
 
             for x in range (0, (int(len(text2)/6))):
