@@ -235,7 +235,9 @@ def Bemoji (imagesrc):
             for x in range (0, (int(len(text2)/6))):
                 if (letter[x] == "G") | (letter[x] == "g") | (letter[x] == "B") | (letter[x] == "b"):
                     try:
-                        placeimage(orig, Bimage, startX[x]-int(scalevar*(dW[x]*rH)), startY[x]-int(scalevar*(dH[x]*rW)), int(dW[x]*rH)*scalefactor, int(dH[x]*rW)*scalefactor)
+                        placeimage(orig, Bimage, startX[x]-int(scalevar*(dW[x]*rH)),
+                                   startY[x]-int(scalevar*(dH[x]*rW)), int(dW[x]*rH)*scalefactor,
+                                   int(dH[x]*rW)*scalefactor)
                     except ValueError:
                         placeimage(orig, Bimage, startX[x],
                                    startY[x], int(dW[x] * rH),
