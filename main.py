@@ -389,16 +389,19 @@ class Window(Frame):
         T3 = Label(self)
         T4 = Label(self)
         T5 = Label(self)
+        T6 = Label(self)
         T1.config(text = "mean")
         T2.config(text="variance")
         T3.config(text="ripple x")
         T4.config(text="ripple y")
         T5.config(text="saturation")
+        T6.config(text="JPEG qual.")
         T1.place(x=10, y=620)
         T2.place(x=10, y=660)
         T3.place(x=250, y=620)
         T4.place(x=250, y=660)
         T5.place(x=420, y=620)
+        T6.place(x=420, y=660)
 
         ##sin params
         self.xA = StringVar()
@@ -423,6 +426,11 @@ class Window(Frame):
         self.Esaturation.place(x=490, y=620)
         self.saturation.set(1.5)
 
+        self.JPEG = StringVar()
+        self.EJPEG = Entry(self, width=5, textvariable=self.JPEG)
+        self.EJPEG.place(x=490, y=660)
+        self.JPEG.set(8)
+
 
         FryButton.place(x=340, y=560)
         QuitButton.place(x=440, y=560)
@@ -436,7 +444,7 @@ class Window(Frame):
         self.progress.place(x=10, y=562)
 
         self.progress["value"] = 0
-        self.progress["maximum"] = 100
+        self.progress["maximum"] = 50
 
     def frystep(self):
         print("[INFO] Frying")
@@ -455,7 +463,7 @@ class Window(Frame):
         elif self.progress["value"] < 35:
             self.imagesrc = saturate(self.imagesrc, float(self.saturation.get()))
         elif self.progress["value"] < 40:
-            self.imagesrc = JPEG(self.imagesrc, 9)
+            self.imagesrc = JPEG(self.imagesrc, self.JPEG.get())
         elif self.progress["value"] < 45:
           radius = [10,20,50,100]
           self.imagesrc = Bulge(self.imagesrc, randrange(100,400), randrange(100,400), radius[randrange(0,3)])
