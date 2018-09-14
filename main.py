@@ -252,17 +252,16 @@ def Bemoji (imagesrc):
             letter = [text2[x * 6] for x in range (0, (int(len(text2)/6)))]
 
             for x in range (0, (int(len(text2)/6))):
-                if (letter[x] == "G") | (letter[x] == "g") | (letter[x] == "B") | (letter[x] == "b"):
-                    exp = 0
+                if (letter[x] == "G") | (letter[x] == "g") | (letter[x] == "B") | (letter[x] == "b") | (letter[x] == "P") | (letter[x] == "p"):
+                    exception = 0
                     try:
                         placeimage(orig, Bimage, startX[x]-int(scalevar*(dW[x]*rH)),
                                    startY[x]-int(scalevar*(dH[x]*rW)), int(dW[x]*rH)*scalefactor,
                                    int(dH[x]*rW)*scalefactor)
                     except ValueError:
-                        exp = 1
-                    if exp:
-                        scalecount = 1.9
-                        switch = 0
+                        exception = 1
+                    if exception:
+                        scalecount = scalefactor - 0.1
                         while scalecount > 0:
                             try:
                                 placeimage(orig, Bimage, startX[x] - int(((scalecount - 1) / 2) * (dW[x] * rH)),
@@ -271,6 +270,7 @@ def Bemoji (imagesrc):
                                            int(dH[x] * rW * scalecount))
                             except ValueError:
                                 scalecount = scalecount - 0.1
+                                print(str(letter[x])+" " +str(scalecount))
                             else:
                                 break
 
@@ -337,15 +337,23 @@ def hunEmoji(imgsrc):
     imagesrc = Image.fromarray(image.astype('uint8'))
     return imagesrc
 
-def saturate(imagesrc):
+def saturate(imagesrc, saturation):
     imagecv = np.array(imagesrc)
     (h, s, v) = cv2.split(imagecv)
-    s = s * 2
+    s = (s * saturation).astype('uint8')
     s = np.clip(s, 0, 255)
     image = cv2.merge([h, s, v])
     imagesrc = Image.fromarray(image.astype('uint8'))
     return imagesrc
+def watermark(imagesrc):
+    imagecv = np.array(imagesrc)
 
+    watermarkimage = cv2.imread("Shutterstock.png", -1)
+    b, g, r, a = cv2.split(watermarkimage)
+    watermarkimage = cv2.merge((r, g, b, a))
+    image = placeimage(imagecv, watermarkimage, 0, 0, imagecv.shape[1], imagecv.shape[0])
+    imagesrc = Image.fromarray(image.astype('uint8'))
+    return imagesrc
 class Window(Frame):
     def __init__(self, master=None):
         Frame.__init__(self, master)
@@ -381,14 +389,17 @@ class Window(Frame):
         T2 = Label(self)
         T3 = Label(self)
         T4 = Label(self)
+        T5 = Label(self)
         T1.config(text = "mean")
         T2.config(text="variance")
         T3.config(text="ripple x")
         T4.config(text="ripple y")
+        T5.config(text="saturation")
         T1.place(x=10, y=620)
         T2.place(x=10, y=660)
         T3.place(x=250, y=620)
         T4.place(x=250, y=660)
+        T5.place(x=420, y=620)
 
         ##sin params
         self.xA = StringVar()
@@ -407,6 +418,12 @@ class Window(Frame):
         self.xw.set(3)
         self.yA.set(100)
         self.yw.set(3)
+
+        self.saturation = StringVar()
+        self.Esaturation = Entry(self, width=5, textvariable=self.saturation)
+        self.Esaturation.place(x=490, y=620)
+        self.saturation.set(1.5)
+
 
         FryButton.place(x=340, y=560)
         QuitButton.place(x=440, y=560)
@@ -437,11 +454,13 @@ class Window(Frame):
         elif self.progress["value"] < 30:
             self.imagesrc = JPEG(self.imagesrc, 10)
         elif self.progress["value"] < 35:
-            self.imagesrc = saturate(self.imagesrc)
+            self.imagesrc = saturate(self.imagesrc, float(self.saturation.get()))
         elif self.progress["value"] < 40:
             self.imagesrc = JPEG(self.imagesrc, 9)
         elif self.progress["value"] < 45:
             self.imagesrc = Bulge(self.imagesrc, randrange(100,400), randrange(100,400), 100)
+        elif self.progress["value"] < 50:
+            self.imagesrc = watermark(self.imagesrc)
         imageresized = self.imagesrc.copy()
         imageresized.thumbnail((530, 530), Image.ANTIALIAS)
         new_image = ImageTk.PhotoImage(imageresized)
