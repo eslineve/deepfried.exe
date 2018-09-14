@@ -81,7 +81,6 @@ def Bulge(image, X, Y, R):
   map_x = np.zeros(img.shape[:2],np.float32)
   map_y = np.zeros(img.shape[:2],np.float32)
   rows,cols = img.shape[:2]
-  R = 50
 
   for j in range(rows):
     for i in range(cols):
@@ -91,12 +90,12 @@ def Bulge(image, X, Y, R):
   for j in range(rows):
     for i in range(cols):
       r = math.sqrt(math.pow(i - X, 2) + math.pow(j - Y, 2))
-      if r > R:
+      if r > R*4:
         continue
       a = 0
       if(j != Y):
         a = math.atan((i - X)/(j - Y))
-      rn = -math.pow(r,2.5)/(10*R)
+      rn = -math.pow(r,2.5)/math.pow(R, 2)
       if j < Y:
         map_x.itemset((j,i), rn*math.sin(a) + X)
         map_y.itemset((j,i), rn*math.cos(a) + Y)
@@ -458,7 +457,8 @@ class Window(Frame):
         elif self.progress["value"] < 40:
             self.imagesrc = JPEG(self.imagesrc, 9)
         elif self.progress["value"] < 45:
-            self.imagesrc = Bulge(self.imagesrc, randrange(100,400), randrange(100,400), 100)
+          radius = [10,20,50,100]
+          self.imagesrc = Bulge(self.imagesrc, randrange(100,400), randrange(100,400), radius[randrange(0,3)])
         elif self.progress["value"] < 50:
             self.imagesrc = watermark(self.imagesrc)
         imageresized = self.imagesrc.copy()
