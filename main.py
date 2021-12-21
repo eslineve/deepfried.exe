@@ -2,7 +2,7 @@
 
 from tkinter import *
 from tkinter import ttk
-from tkinter import filedialog
+from tkinter import filedialog, messagebox
 
 from PIL import ImageTk, Image
 
@@ -446,7 +446,25 @@ class Window(Frame):
         self.progress["value"] = 0
         self.progress["maximum"] = 50
 
+    def validateInputs(self):
+        if self.JPEG.get().isalpha():
+            return False
+        if self.xA.get().isalpha():
+            return False
+        if self.yA.get().isalpha():
+            return False
+        if self.xw.get().isalpha():
+            return False
+        if self.yw.get().isalpha():
+            return False
+        if self.saturation.get().isalpha():
+            return False
+        return True
+
     def frystep(self):
+        if not self.validateInputs():
+            messagebox.showerror(title="Inputs", message="Inputs are not intergers")
+            return
         print("[INFO] Frying")
         if self.progress["value"] < 5:
             self.imagesrc = Bemoji(self.imagesrc)
@@ -463,7 +481,7 @@ class Window(Frame):
         elif self.progress["value"] < 35:
             self.imagesrc = saturate(self.imagesrc, float(self.saturation.get()))
         elif self.progress["value"] < 40:
-            self.imagesrc = JPEG(self.imagesrc, self.JPEG.get())
+            self.imagesrc = JPEG(self.imagesrc, int(self.JPEG.get()))
         elif self.progress["value"] < 45:
           radius = [10,20,50,100]
           self.imagesrc = Bulge(self.imagesrc, randrange(100,400), randrange(100,400), radius[randrange(0,3)])
